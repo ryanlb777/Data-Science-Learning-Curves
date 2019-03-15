@@ -1,0 +1,304 @@
+---
+title: "Extra Credit - Learning Curves"
+author: "Ryan LeBon"
+date: "4/20/2018"
+output: html_document
+---
+This is an extra credit assignment about learning curves.
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Reading and Preprocessing Data
+This is the data we are reading and processing
+```{r}
+library(caret)
+dat = read.csv("https://raw.githubusercontent.com/grbruns/cst383/master/german-credit.csv")
+summary(dat)
+# create bad loan variable
+
+bad.loan = factor(dat$good.loan - 1)
+
+
+# use only numeric data, and scale it
+
+dat = dat[ ,c("duration.in.months", "amount", "percentage.of.disposable.income", "at.residence.since",
+              
+              "age.in.years", "num.credits.at.bank")]
+
+
+dat = data.frame(scale(dat))
+
+
+# add bad loan variable to data frame
+
+dat$bad.loan = bad.loan
+
+
+# structure of the data
+
+
+str(dat)
+
+
+# create training and test sets
+
+
+tr_rows = sample(nrow(dat), nrow(dat)*.8)
+
+tr_dat = dat[tr_rows,]
+
+te_dat = dat[-tr_rows,]
+```
+
+## Learning Curve Model 1
+This is a learning curve that shows use the test error rate and the training size of the data. The training size is the number of rows that are located inside of the dataset. This is good to see because the learning curve is very useful in data science.
+It helps in observing whether our model is having the high bias or high variance problem. The X-Axis is the number of samples (training set size) and the Y-Axis is the Error Rate ((RSS/J(theta)/cost function )). The model is fitted to the features such as; duration in months, and amount, which contribute to having a bad loan.
+
+
+```{r}
+
+create_learning_curve <- function(){
+  par(mfrow=c(2,2))
+  a <- seq(from=1,to=9,by=2)
+  a <- a[which(!a==7)]
+  for(i in a){
+  # see how knn classifier works as training size changes
+  
+  k = i
+  
+  te_errs = c()
+  
+  tr_errs = c()
+  
+  te_actual = te_dat$bad.loan
+  
+  tr_sizes = seq(100, nrow(tr_dat), length.out=10)
+  
+  for (tr_size in tr_sizes) {
+    
+    tr_dat1 = tr_dat[1:tr_size,]
+    
+    tr_actual = tr_dat1$bad.loan
+    
+    fit = knn3(bad.loan ~ duration.in.months + amount, data=tr_dat1, k=k)
+    
+    
+    # error on training set
+    
+    tr_predicted = predict(fit, tr_dat1, type="class")
+    
+    err = mean(tr_actual != tr_predicted)
+    
+    tr_errs = c(tr_errs, err)
+    
+    
+    
+    # error on test set
+    
+    te_predicted = predict(fit, te_dat, type="class")
+    
+    err = mean(te_actual != te_predicted)
+    
+    te_errs = c(te_errs, err)
+    
+  }
+  
+  plot(tr_sizes , tr_errs   ,type = "b" , ylim = c(0, 0.8) , ylab = "error rate", xlab="Training Set Size", col = "forestgreen",main=k)
+  par(new = TRUE)
+  plot(tr_sizes , te_errs   ,type = "b" ,ylim = c(0 , 0.8), ylab = "error rate" , xlab="Training Set Size", col = "firebrick2")
+  
+  legend("topleft",c("training error","test error"),fill=c("forestgreen","firebrick2"),horiz=TRUE,cex=0.7)
+  }
+}
+
+
+create_learning_curve()
+
+```
+
+
+
+
+## Learning Curve Model 2
+The learning curve is fitted to the features such as; age, and amount, which contribute to having a bad loan.
+```{r}
+
+create_learning_curve2 <- function(){
+  par(mfrow=c(2,2))
+  a <- seq(from=1,to=9,by=2)
+  a <- a[which(!a==7)]
+  for(i in a){
+  # see how knn classifier works as training size changes
+  
+  k = i
+  
+  te_errs = c()
+  
+  tr_errs = c()
+  
+  te_actual = te_dat$bad.loan
+  
+  tr_sizes = seq(100, nrow(tr_dat), length.out=10)
+  
+  for (tr_size in tr_sizes) {
+    
+    tr_dat1 = tr_dat[1:tr_size,]
+    
+    tr_actual = tr_dat1$bad.loan
+    
+    fit = knn3(bad.loan ~ age.in.years + amount, data=tr_dat1, k=k)
+    
+    
+    # error on training set
+    
+    tr_predicted = predict(fit, tr_dat1, type="class")
+    
+    err = mean(tr_actual != tr_predicted)
+    
+    tr_errs = c(tr_errs, err)
+    
+    
+    
+    # error on test set
+    
+    te_predicted = predict(fit, te_dat, type="class")
+    
+    err = mean(te_actual != te_predicted)
+    
+    te_errs = c(te_errs, err)
+    
+  }
+  
+  plot(tr_sizes , tr_errs   ,type = "b" , ylim = c(0, 0.8) , ylab = "error rate", xlab="Training Set Size", col = "forestgreen",main=k)
+  par(new = TRUE)
+  plot(tr_sizes , te_errs   ,type = "b" ,ylim = c(0 , 0.8), ylab = "error rate" , xlab="Training Set Size", col = "firebrick2")
+  
+  legend("topleft",c("training error","test error"),fill=c("forestgreen","firebrick2"),horiz=TRUE,cex=0.7)
+  }
+}
+
+create_learning_curve2()
+```
+
+## Learning Curve Model 3
+The learning curve is fitted to the features such as; age, and number of credits in bank, which contribute to having a bad loan.
+```{r}
+
+create_learning_curve3 <- function(){
+  par(mfrow=c(2,2))
+  a <- seq(from=1,to=9,by=2)
+  a <- a[which(!a==7)]
+  for(i in a){
+  # see how knn classifier works as training size changes
+  
+  k = i
+  
+  te_errs = c()
+  
+  tr_errs = c()
+  
+  te_actual = te_dat$bad.loan
+  
+  tr_sizes = seq(100, nrow(tr_dat), length.out=10)
+  
+  for (tr_size in tr_sizes) {
+    
+    tr_dat1 = tr_dat[1:tr_size,]
+    
+    tr_actual = tr_dat1$bad.loan
+    
+    fit = knn3(bad.loan ~ age.in.years + num.credits.at.bank +amount, data=tr_dat1, k=k)
+    
+    
+    # error on training set
+    
+    tr_predicted = predict(fit, tr_dat1, type="class")
+    
+    err = mean(tr_actual != tr_predicted)
+    
+    tr_errs = c(tr_errs, err)
+    
+    
+    
+    # error on test set
+    
+    te_predicted = predict(fit, te_dat, type="class")
+    
+    err = mean(te_actual != te_predicted)
+    
+    te_errs = c(te_errs, err)
+    
+  }
+  
+  plot(tr_sizes , tr_errs   ,type = "b" , ylim = c(0, 0.8) , ylab = "error rate", xlab="Training Set Size", col = "forestgreen",main=k)
+  par(new = TRUE)
+  plot(tr_sizes , te_errs   ,type = "b" ,ylim = c(0 , 0.8), ylab = "error rate" , xlab="Training Set Size", col = "firebrick2")
+  
+  legend("topleft",c("training error","test error"),fill=c("forestgreen","firebrick2"),horiz=TRUE,cex=0.7)
+  }
+}
+create_learning_curve3()
+```
+
+## Learning Curve Model 4
+The learning curve is fitted to all of the features which contribute to having a bad loan.
+```{r}
+
+create_learning_curve4 <- function(){
+  par(mfrow=c(2,2))
+  a <- seq(from=1,to=9,by=2)
+  a <- a[which(!a==7)]
+  for(i in a){
+  # see how knn classifier works as training size changes
+  
+  k = i
+  
+  te_errs = c()
+  
+  tr_errs = c()
+  
+  te_actual = te_dat$bad.loan
+  
+  tr_sizes = seq(100, nrow(tr_dat), length.out=10)
+  
+  for (tr_size in tr_sizes) {
+    
+    tr_dat1 = tr_dat[1:tr_size,]
+    
+    tr_actual = tr_dat1$bad.loan
+    
+    fit = knn3(bad.loan ~ ., data=tr_dat1, k=k)
+    
+    
+    # error on training set
+    
+    tr_predicted = predict(fit, tr_dat1, type="class")
+    
+    err = mean(tr_actual != tr_predicted)
+    
+    tr_errs = c(tr_errs, err)
+    
+    
+    
+    # error on test set
+    
+    te_predicted = predict(fit, te_dat, type="class")
+    
+    err = mean(te_actual != te_predicted)
+    
+    te_errs = c(te_errs, err)
+    
+  }
+  
+  plot(tr_sizes , tr_errs   ,type = "b" , ylim = c(0, 0.8) , ylab = "error rate", xlab="Training Set Size", col = "forestgreen",main=k)
+  par(new = TRUE)
+  plot(tr_sizes , te_errs   ,type = "b" ,ylim = c(0 , 0.8), ylab = "error rate" , xlab="Training Set Size", col = "firebrick2")
+  
+  legend("topleft",c("training error","test error"),fill=c("forestgreen","firebrick2"),horiz=TRUE,cex=0.7)
+  }
+}
+create_learning_curve4()
+```
+
+I should have just passed params....
